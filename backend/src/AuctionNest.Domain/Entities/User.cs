@@ -37,6 +37,9 @@ public sealed class User : Entity
     public void UpdatePasswordHash(string newHash)
         => PasswordHash = newHash;
 
+    public void UpdateDisplayName(string newDisplayName)
+        => DisplayName = newDisplayName.Trim();
+
     public void SoftDelete()
         => DeletedAt = DateTime.UtcNow;
 }

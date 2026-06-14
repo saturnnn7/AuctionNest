@@ -18,4 +18,15 @@ public sealed class WatchListRepository : Repository<WatchList>, IWatchListRepos
         => await DbSet
             .Where(w => w.AuctionId == auctionId)
             .ToListAsync(ct);
+    
+    public async Task<List<WatchList>> GetByUserIdWithAuctionsAsync(
+        Guid userId, CancellationToken ct = default)
+        => await DbSet
+            .Include(w => w.Auction)
+                .ThenInclude(a => a.Seller)
+            .Include(w => w.Auction)
+                .ThenInclude(a => a.Category)
+            .Where(w => w.UserId == userId)
+            .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync(ct);
 }

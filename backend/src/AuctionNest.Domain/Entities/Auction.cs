@@ -99,27 +99,28 @@ public sealed class Auction : Entity
     /// <summary>
     /// Places a bid. Includes anti-snipe logic.
     /// Must be called inside a Redlock to prevent race conditions.
+    /// Returns the newly created Bid so the caller can explicitly track it.
     /// </summary>
-    public Result PlaceBid(Guid bidderId, decimal amount)
+    public Result<Bid> PlaceBid(Guid bidderId, decimal amount)
     {
         if (Status is not (AuctionStatus.Active or AuctionStatus.Extending))
-            return Result.Failure(AuctionErrors.NotActive);
-
+            return Result.Failure<Bid>(AuctionErrors.NotActive);
+    
         if (bidderId == SellerId)
-            return Result.Failure(AuctionErrors.SellerCannotBid);
-
+            return Result.Failure<Bid>(AuctionErrors.SellerCannotBid);
+    
         var minimumBid = CurrentPrice + MinBidIncrement;
         if (amount < minimumBid)
-            return Result.Failure(AuctionErrors.BidTooLow(minimumBid));
-
+            return Result.Failure<Bid>(AuctionErrors.BidTooLow(minimumBid));
+    
         // Mark previous winner as outbid
         var previousWinner = _bids.FirstOrDefault(b => b.IsWinning);
         previousWinner?.SetNotWinning();
-
+    
         var bid = Bid.Create(Id, bidderId, amount);
         _bids.Add(bid);
         CurrentPrice = amount;
-
+    
         // Anti-snipe: extend if bid placed in last 30 seconds
         var remaining = EndsAt - DateTime.UtcNow;
         if (remaining.TotalSeconds <= AntiSnipeWindowSeconds
@@ -130,31 +131,33 @@ public sealed class Auction : Entity
             Status = AuctionStatus.Extending;
             RaiseDomainEvent(AuctionExtendedEvent.Create(Id, EndsAt, ExtensionCount));
         }
-
-        RaiseDomainEvent(BidPlacedEvent.Create(Id, bidderId, amount, CurrentPrice, previousWinner?.BidderId));
-        return Result.Success();
+    
+        RaiseDomainEvent(BidPlacedEvent.Create(
+            Id, bidderId, amount, CurrentPrice, previousWinner?.BidderId));
+    
+        return Result.Success(bid);
     }
 
     /// <summary>
     /// Instant purchase. Only available before any bids are placed.
     /// </summary>
-    public Result BuyItNow(Guid buyerId)
+    public Result<Bid> BuyItNow(Guid buyerId)
     {
         if (!IsBuyItNowAvailable)
-            return Result.Failure(AuctionErrors.BuyItNowNotAvailable);
-
+            return Result.Failure<Bid>(AuctionErrors.BuyItNowNotAvailable);
+    
         if (buyerId == SellerId)
-            return Result.Failure(AuctionErrors.SellerCannotBid);
-
+            return Result.Failure<Bid>(AuctionErrors.SellerCannotBid);
+    
         var bid = Bid.Create(Id, buyerId, BuyItNowPrice!.Value);
         _bids.Add(bid);
         CurrentPrice = BuyItNowPrice.Value;
         Status = AuctionStatus.Ended;
         EndsAt = DateTime.UtcNow;
-
+    
         RaiseDomainEvent(BuyItNowUsedEvent.Create(Id, buyerId, BuyItNowPrice.Value));
         RaiseDomainEvent(AuctionEndedEvent.Create(Id, buyerId, BuyItNowPrice.Value, true));
-        return Result.Success();
+        return Result.Success(bid);
     }
 
     /// <summary>

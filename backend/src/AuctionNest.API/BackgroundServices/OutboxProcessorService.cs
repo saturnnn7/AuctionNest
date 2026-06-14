@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AuctionNest.API.Hubs;
+using AuctionNest.Application.Common.Interfaces.Services;
 using AuctionNest.Domain.Entities;
 using AuctionNest.Domain.Enums;
 using AuctionNest.Domain.Events;
@@ -15,15 +16,14 @@ public sealed class OutboxProcessorService : BackgroundService
     private readonly ILogger<OutboxProcessorService> _logger;
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
 
-    // Maps EventType string to concrete type for deserialization
     private static readonly Dictionary<string, Type> EventTypes = new()
     {
-        { nameof(BidPlacedEvent),       typeof(BidPlacedEvent) },
-        { nameof(AuctionExtendedEvent), typeof(AuctionExtendedEvent) },
-        { nameof(AuctionEndedEvent),    typeof(AuctionEndedEvent) },
-        { nameof(AuctionStartedEvent),  typeof(AuctionStartedEvent) },
-        { nameof(AuctionCancelledEvent),typeof(AuctionCancelledEvent) },
-        { nameof(BuyItNowUsedEvent),    typeof(BuyItNowUsedEvent) },
+        { nameof(BidPlacedEvent),        typeof(BidPlacedEvent) },
+        { nameof(AuctionExtendedEvent),  typeof(AuctionExtendedEvent) },
+        { nameof(AuctionEndedEvent),     typeof(AuctionEndedEvent) },
+        { nameof(AuctionStartedEvent),   typeof(AuctionStartedEvent) },
+        { nameof(AuctionCancelledEvent), typeof(AuctionCancelledEvent) },
+        { nameof(BuyItNowUsedEvent),     typeof(BuyItNowUsedEvent) },
     };
 
     public OutboxProcessorService(
@@ -56,22 +56,24 @@ public sealed class OutboxProcessorService : BackgroundService
     private async Task ProcessBatchAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var hub = scope.ServiceProvider.GetRequiredService<IHubContext<AuctionHub>>();
+
+        var context      = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hub          = scope.ServiceProvider.GetRequiredService<IHubContext<AuctionHub>>();
+        var jobScheduler = scope.ServiceProvider.GetRequiredService<IJobScheduler>();
 
         var messages = await context.OutboxMessages
             .Where(m => m.ProcessedAt == null && m.RetryCount < 3)
             .OrderBy(m => m.CreatedAt)
             .Take(20)
             .ToListAsync(ct);
-        
+
         if (messages.Count == 0) return;
 
         foreach (var message in messages)
         {
             try
             {
-                await DispatchAsync(message, hub, context, ct);
+                await DispatchAsync(message, hub, context, jobScheduler, ct);
                 message.MarkProcessed();
             }
             catch (Exception ex)
@@ -79,7 +81,7 @@ public sealed class OutboxProcessorService : BackgroundService
                 _logger.LogError(ex,
                     "Failed to process outbox message {Id} ({EventType}). Retry: {Retry}",
                     message.Id, message.EventType, message.RetryCount + 1);
-                
+
                 message.MarkFailed(ex.Message);
             }
         }
@@ -91,6 +93,7 @@ public sealed class OutboxProcessorService : BackgroundService
         OutboxMessage message,
         IHubContext<AuctionHub> hub,
         AppDbContext context,
+        IJobScheduler jobScheduler,
         CancellationToken ct)
     {
         if (!EventTypes.TryGetValue(message.EventType, out var eventType))
@@ -108,14 +111,24 @@ public sealed class OutboxProcessorService : BackgroundService
                 break;
 
             case AuctionExtendedEvent e:
-                await HandleAuctionExtendedAsync(e, hub, ct);
+                await HandleAuctionExtendedAsync(e, hub, jobScheduler, ct);
                 break;
 
             case AuctionEndedEvent e:
                 await HandleAuctionEndedAsync(e, hub, context, ct);
                 break;
+
+            case AuctionStartedEvent e:
+                await HandleAuctionStartedAsync(e, hub, ct);
+                break;
+
+            case AuctionCancelledEvent e:
+                await HandleAuctionCancelledAsync(e, hub, ct);
+                break;
         }
     }
+
+    // ----- Handlers -----
 
     private static async Task HandleBidPlacedAsync(
         BidPlacedEvent e,
@@ -123,7 +136,7 @@ public sealed class OutboxProcessorService : BackgroundService
         AppDbContext context,
         CancellationToken ct)
     {
-        // Push to everyone watching the auction room
+        // Notify everyone in the auction room
         await hub.Clients.Group($"auction:{e.AuctionId}")
             .SendAsync("BidPlaced", new
             {
@@ -158,11 +171,14 @@ public sealed class OutboxProcessorService : BackgroundService
         }
     }
 
-    private static Task HandleAuctionExtendedAsync(
+    private static async Task HandleAuctionExtendedAsync(
         AuctionExtendedEvent e,
         IHubContext<AuctionHub> hub,
+        IJobScheduler jobScheduler,
         CancellationToken ct)
-        => hub.Clients.Group($"auction:{e.AuctionId}")
+    {
+        // Notify everyone in the room about the new end time
+        await hub.Clients.Group($"auction:{e.AuctionId}")
             .SendAsync("AuctionExtended", new
             {
                 e.AuctionId,
@@ -170,13 +186,17 @@ public sealed class OutboxProcessorService : BackgroundService
                 e.ExtensionCount
             }, ct);
 
+        // Reschedule the end job — old job will detect extension and skip itself
+        jobScheduler.ScheduleAuctionEnd(e.AuctionId, e.NewEndsAt);
+    }
+
     private static async Task HandleAuctionEndedAsync(
         AuctionEndedEvent e,
         IHubContext<AuctionHub> hub,
         AppDbContext context,
         CancellationToken ct)
     {
-        // Push auction ended to the room
+        // Notify everyone in the room
         await hub.Clients.Group($"auction:{e.AuctionId}")
             .SendAsync("AuctionEnded", new
             {
@@ -208,5 +228,46 @@ public sealed class OutboxProcessorService : BackgroundService
                     Type = winnerNotification.Type.ToString()
                 }, ct);
         }
+
+        // Notify seller — reserve not met means no sale
+        if (!e.IsReserveMet)
+        {
+            var auction = await context.Auctions.FindAsync([e.AuctionId], ct);
+            if (auction is not null)
+            {
+                var sellerNotification = Notification.Create(
+                    auction.SellerId,
+                    NotificationType.AuctionEndedSeller,
+                    "Auction ended — reserve not met",
+                    "Your auction ended but the reserve price was not reached.",
+                    payload: e.AuctionId.ToString());
+
+                context.Notifications.Add(sellerNotification);
+
+                await hub.Clients
+                    .Group($"user:{auction.SellerId}")
+                    .SendAsync("NewNotification", new
+                    {
+                        sellerNotification.Id,
+                        sellerNotification.Title,
+                        sellerNotification.Message,
+                        Type = sellerNotification.Type.ToString()
+                    }, ct);
+            }
+        }
     }
+
+    private static Task HandleAuctionStartedAsync(
+        AuctionStartedEvent e,
+        IHubContext<AuctionHub> hub,
+        CancellationToken ct)
+        => hub.Clients.Group($"auction:{e.AuctionId}")
+            .SendAsync("AuctionStarted", new { e.AuctionId, e.OccurredAt }, ct);
+
+    private static Task HandleAuctionCancelledAsync(
+        AuctionCancelledEvent e,
+        IHubContext<AuctionHub> hub,
+        CancellationToken ct)
+        => hub.Clients.Group($"auction:{e.AuctionId}")
+            .SendAsync("AuctionCancelled", new { e.AuctionId, e.OccurredAt }, ct);
 }

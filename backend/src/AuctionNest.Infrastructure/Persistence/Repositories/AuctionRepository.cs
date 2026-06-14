@@ -57,6 +57,8 @@ public sealed class AuctionRepository : Repository<Auction>, IAuctionRepository
 
     public async Task<Auction?> GetWithBidsAsync(Guid id, CancellationToken ct = default)
         => await DbSet
+            .Include(a => a.Seller)
+            .Include(a => a.Category)
             .Include(a => a.Bids)
             .FirstOrDefaultAsync(a => a.Id == id, ct);
 

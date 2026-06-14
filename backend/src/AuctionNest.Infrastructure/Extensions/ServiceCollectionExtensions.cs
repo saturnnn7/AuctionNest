@@ -76,6 +76,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDistributedLockService, DistributedLockService>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IJobScheduler, HangfireJobScheduler>();
         services.AddHttpContextAccessor();
 
         // ----- JWT Settings -----

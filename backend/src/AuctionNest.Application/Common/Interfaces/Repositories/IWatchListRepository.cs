@@ -9,4 +9,7 @@ public interface IWatchListRepository : IRepository<WatchList>
 
     Task<List<WatchList>> GetByAuctionIdAsync(
         Guid auctionId, CancellationToken ct = default);
+    
+    Task<List<WatchList>> GetByUserIdWithAuctionsAsync(
+        Guid userId, CancellationToken ct = default);
 }

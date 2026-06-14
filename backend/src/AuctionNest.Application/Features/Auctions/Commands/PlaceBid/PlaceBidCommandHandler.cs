@@ -28,48 +28,47 @@ public sealed class PlaceBidCommandHandler
     }
 
     public async Task<Result<BidDto>> Handle(
-        PlaceBidCommand request,
-        CancellationToken cancellationToken)
+    PlaceBidCommand request,
+    CancellationToken cancellationToken)
     {
         var bidderId = _currentUser.UserId;
         if (bidderId is null)
             return Result.Failure<BidDto>(UserErrors.Unauthorized);
-
-        // Idempotency: if this exact request was already processed, reject duplicate
+    
         if (request.IdempotencyKey is not null)
         {
-            var idempotencyExists = await _cache.ExistsAsync(
+            var exists = await _cache.ExistsAsync(
                 $"bid_idempotency:{request.IdempotencyKey}", cancellationToken);
-
-            if (idempotencyExists)
+            if (exists)
                 return Result.Failure<BidDto>(BidErrors.DuplicateRequest);
         }
-
-        // Acquire distributed lock — prevents race condition when two users bid simultaneously
+    
         await using var distributedLock = await _lockService.AcquireAsync(
             $"auction:{request.AuctionId}",
             TimeSpan.FromSeconds(10),
             cancellationToken);
-
+    
         if (distributedLock is null)
             return Result.Failure<BidDto>(AuctionErrors.LockNotAcquired);
-
-        // Load auction WITH bids — needed to find current winner and apply anti-snipe
+    
         var auction = await _unitOfWork.Auctions.GetWithBidsAsync(
             request.AuctionId, cancellationToken);
-
+    
         if (auction is null)
             return Result.Failure<BidDto>(AuctionErrors.NotFound);
-
-        // All business logic lives in the domain — Redlock guarantees single-threaded access here
-        var result = auction.PlaceBid(bidderId.Value, request.Amount);
-        if (result.IsFailure)
-            return Result.Failure<BidDto>(result.Error);
-
-        // SaveChanges: OutboxInterceptor atomically writes BidPlacedEvent to outbox_messages
+    
+        // Domain method returns the new Bid entity
+        var bidResult = auction.PlaceBid(bidderId.Value, request.Amount);
+        if (bidResult.IsFailure)
+            return Result.Failure<BidDto>(bidResult.Error);
+    
+        // Explicitly register the new Bid with EF Core as Added
+        // EF Core cannot reliably detect new entities added to private field-backed collections
+        await _unitOfWork.Bids.AddAsync(bidResult.Value, cancellationToken);
+    
+        // SaveChanges: AuditInterceptor sets timestamps, OutboxInterceptor writes events atomically
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // Mark idempotency key as used — prevents duplicate bids from retried requests
+    
         if (request.IdempotencyKey is not null)
         {
             await _cache.SetAsync(
@@ -78,8 +77,7 @@ public sealed class PlaceBidCommandHandler
                 TimeSpan.FromHours(24),
                 cancellationToken);
         }
-
-        var winningBid = auction.Bids.First(b => b.IsWinning);
-        return Result.Success(BidDto.FromEntity(winningBid, auction.CurrentPrice));
+    
+        return Result.Success(BidDto.FromEntity(bidResult.Value, auction.CurrentPrice));
     }
 }

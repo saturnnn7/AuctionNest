@@ -32,4 +32,8 @@ public static class AuctionErrors
     public static readonly Error NotOwner =
         Error.Forbidden("Auction.NotOwner",
             "Only the auction owner can perform this action.");
+
+    public static readonly Error LockNotAcquired =
+        Error.Forbidden("Auction.LockNotAcquired",
+            "Another bid is being processed. Please try again in a moment.");
 }

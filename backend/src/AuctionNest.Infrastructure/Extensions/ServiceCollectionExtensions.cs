@@ -97,14 +97,28 @@ public static class ServiceCollectionExtensions
                 options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtSettings.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtSettings.Audience,
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new RsaSecurityKey(publicRsa),
-                    ValidateIssuerSigningKey = true,
-                    ClockSkew = TimeSpan.Zero
+                    ValidateIssuer              = true,
+                    ValidIssuer                 = jwtSettings.Issuer,
+                    ValidateAudience            = true,
+                    ValidAudience               = jwtSettings.Audience,
+                    ValidateLifetime            = true,
+                    IssuerSigningKey            = new RsaSecurityKey(publicRsa),
+                    ValidateIssuerSigningKey    = true,
+                    ClockSkew                   = TimeSpan.Zero
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+            
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                            context.Token = accessToken;
+            
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

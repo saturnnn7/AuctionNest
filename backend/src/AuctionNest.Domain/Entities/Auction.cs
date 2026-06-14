@@ -131,7 +131,7 @@ public sealed class Auction : Entity
             RaiseDomainEvent(AuctionExtendedEvent.Create(Id, EndsAt, ExtensionCount));
         }
 
-        RaiseDomainEvent(BidPlacedEvent.Create(Id, bidderId, amount, CurrentPrice));
+        RaiseDomainEvent(BidPlacedEvent.Create(Id, bidderId, amount, CurrentPrice, previousWinner?.BidderId));
         return Result.Success();
     }
 

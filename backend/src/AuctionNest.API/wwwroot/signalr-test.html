@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AuctionNest — SignalR Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 24px; }
+    h1 { color: #58a6ff; margin-bottom: 20px; font-size: 18px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .panel { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+    .panel h2 { color: #8b949e; font-size: 12px; text-transform: uppercase;
+                letter-spacing: 1px; margin-bottom: 12px; }
+
+    label { display: block; color: #8b949e; font-size: 11px; margin-bottom: 4px; margin-top: 10px; }
+    input  { width: 100%; padding: 7px 10px; background: #0d1117; border: 1px solid #30363d;
+             border-radius: 6px; color: #c9d1d9; font-family: monospace; font-size: 13px; }
+    input:focus { outline: none; border-color: #58a6ff; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    button { padding: 7px 14px; border: none; border-radius: 6px; cursor: pointer;
+             font-family: monospace; font-size: 12px; font-weight: bold; }
+    .btn-primary  { background: #238636; color: #fff; }
+    .btn-danger   { background: #da3633; color: #fff; }
+    .btn-secondary{ background: #21262d; color: #c9d1d9; border: 1px solid #30363d; }
+    button:disabled { opacity: 0.4; cursor: default; }
+
+    .status { display: inline-flex; align-items: center; gap: 6px;
+              font-size: 12px; margin-top: 10px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #da3633; }
+    .dot.connected { background: #3fb950; }
+
+    #log { grid-column: 1 / -1; }
+    #log .panel { height: 340px; display: flex; flex-direction: column; }
+    #events { flex: 1; overflow-y: auto; font-size: 12px; line-height: 1.7; }
+    .event-row { padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; }
+    .event-row:hover { background: #1f2937; }
+    .ts   { color: #6e7681; margin-right: 8px; }
+    .tag  { padding: 1px 6px; border-radius: 3px; font-size: 10px;
+            font-weight: bold; margin-right: 8px; }
+    .tag-connected     { background: #1f4123; color: #3fb950; }
+    .tag-disconnected  { background: #3d1b1b; color: #f85149; }
+    .tag-BidPlaced     { background: #1c2d4a; color: #79c0ff; }
+    .tag-AuctionExtended { background: #2d2108; color: #e3b341; }
+    .tag-AuctionEnded  { background: #2d1b47; color: #bc8cff; }
+    .tag-AuctionStarted{ background: #1f4123; color: #3fb950; }
+    .tag-AuctionCancelled { background: #3d1b1b; color: #f85149; }
+    .tag-NewNotification { background: #2d2108; color: #e3b341; }
+    .tag-info { background: #1c2d4a; color: #79c0ff; }
+    .payload { color: #8b949e; word-break: break-all; }
+
+    .clear-btn { margin-left: auto; background: none; border: none;
+                 color: #6e7681; font-size: 11px; cursor: pointer; padding: 0; }
+    .clear-btn:hover { color: #c9d1d9; }
+  </style>
+</head>
+<body>
+
+<h1>⚡ AuctionNest — SignalR Real-time Test</h1>
+
+<div class="grid">
+
+  <!-- Connection panel -->
+  <div class="panel">
+    <h2>Connection</h2>
+
+    <label>Hub URL</label>
+    <input id="hubUrl" value="http://localhost:5165/hubs/auction" />
+
+    <label>JWT Access Token (optional — for personal notifications)</label>
+    <input id="token" placeholder="eyJhbGci..." />
+
+    <div class="btn-row">
+      <button class="btn-primary"  id="btnConnect">Connect</button>
+      <button class="btn-danger"   id="btnDisconnect" disabled>Disconnect</button>
+    </div>
+
+    <div class="status">
+      <div class="dot" id="dot"></div>
+      <span id="statusText">Disconnected</span>
+    </div>
+  </div>
+
+  <!-- Auction room panel -->
+  <div class="panel">
+    <h2>Auction Room</h2>
+
+    <label>Auction ID</label>
+    <input id="auctionId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+
+    <div class="btn-row">
+      <button class="btn-secondary" id="btnJoin"  disabled>Join Room</button>
+      <button class="btn-secondary" id="btnLeave" disabled>Leave Room</button>
+    </div>
+  </div>
+
+  <!-- Event log -->
+  <div id="log">
+    <div class="panel">
+      <h2>
+        Event Log
+        <button class="clear-btn" onclick="clearLog()">clear</button>
+      </h2>
+      <div id="events"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let connection = null;
+
+  const $ = id => document.getElementById(id);
+
+  function ts() {
+    return new Date().toTimeString().slice(0, 8);
+  }
+
+  function log(tag, message, tagClass) {
+    const div = document.createElement('div');
+    div.className = 'event-row';
+    div.innerHTML =
+      `<span class="ts">${ts()}</span>` +
+      `<span class="tag ${tagClass || 'tag-' + tag}">${tag}</span>` +
+      `<span class="payload">${typeof message === 'object'
+          ? JSON.stringify(message, null, 0)
+          : message}</span>`;
+    const events = $('events');
+    events.appendChild(div);
+    events.scrollTop = events.scrollHeight;
+  }
+
+  function setConnected(ok) {
+    $('dot').className        = 'dot' + (ok ? ' connected' : '');
+    $('statusText').textContent = ok ? 'Connected' : 'Disconnected';
+    $('btnConnect').disabled    = ok;
+    $('btnDisconnect').disabled = !ok;
+    $('btnJoin').disabled       = !ok;
+    $('btnLeave').disabled      = !ok;
+  }
+
+  function clearLog() { $('events').innerHTML = ''; }
+
+  $('btnConnect').onclick = async () => {
+    const url   = $('hubUrl').value.trim();
+    const token = $('token').value.trim();
+
+    const builder = new signalR.HubConnectionBuilder()
+      .withUrl(url, token ? { accessTokenFactory: () => token } : {})
+      .withAutomaticReconnect()
+      .configureLogging(signalR.LogLevel.Warning);
+
+    connection = builder.build();
+
+    // Register all server-push events
+    const events = [
+      'BidPlaced', 'AuctionExtended', 'AuctionEnded',
+      'AuctionStarted', 'AuctionCancelled', 'NewNotification'
+    ];
+    events.forEach(evt => {
+      connection.on(evt, data => log(evt, data));
+    });
+
+    connection.onclose(() => {
+      log('disconnected', 'Connection closed', 'tag-disconnected');
+      setConnected(false);
+    });
+
+    connection.onreconnecting(() => log('info', 'Reconnecting...', 'tag-info'));
+    connection.onreconnected(() => log('info', 'Reconnected', 'tag-info'));
+
+    try {
+      await connection.start();
+      log('connected', `Hub: ${url}`, 'tag-connected');
+      setConnected(true);
+    } catch (e) {
+      log('error', e.message, 'tag-disconnected');
+    }
+  };
+
+  $('btnDisconnect').onclick = async () => {
+    if (connection) await connection.stop();
+  };
+
+  $('btnJoin').onclick = async () => {
+    const id = $('auctionId').value.trim();
+    if (!id) return;
+    await connection.invoke('JoinAuction', id);
+    log('info', `Joined room auction:${id}`, 'tag-info');
+  };
+
+  $('btnLeave').onclick = async () => {
+    const id = $('auctionId').value.trim();
+    if (!id) return;
+    await connection.invoke('LeaveAuction', id);
+    log('info', `Left room auction:${id}`, 'tag-info');
+  };
+</script>
+
+</body>
+</html>

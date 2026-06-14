@@ -69,6 +69,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire");
+app.UseStaticFiles();
 app.MapControllers();
 
 // SignalR hub endpoint

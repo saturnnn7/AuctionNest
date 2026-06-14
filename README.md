@@ -8,6 +8,7 @@
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![SignalR](https://img.shields.io/badge/SignalR-Real--time-512BD4?style=flat-square)
+![CI](https://github.com/saturnnn7/AuctionNest/actions/workflows/ci.yml/badge.svg)
 ![Tests](https://img.shields.io/badge/Tests-44%20passing-3fb950?style=flat-square)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-orange?style=flat-square)
 

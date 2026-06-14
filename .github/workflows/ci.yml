@@ -8,24 +8,28 @@ on:
 
 jobs:
   build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: 8.0.x
 
-      - name: Restore
-        run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore backend/AuctionNest.sln
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build backend/AuctionNest.sln --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test --no-build -c Release --verbosity normal
+      - name: Run unit tests
+        run: >
+          dotnet test backend/tests/AuctionNest.UnitTests
+          --no-build
+          --configuration Release
+          --verbosity normal
+          --logger "console;verbosity=detailed"

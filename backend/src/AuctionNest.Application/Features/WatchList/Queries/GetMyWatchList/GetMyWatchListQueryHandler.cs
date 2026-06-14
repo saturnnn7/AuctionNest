@@ -1,5 +1,4 @@
 using AuctionNest.Application.Common.Interfaces;
-using AuctionNest.Application.Common.Interfaces.Services;
 using AuctionNest.Application.Features.Auctions.Common;
 using AuctionNest.Domain.Common;
 using AuctionNest.Domain.Errors;

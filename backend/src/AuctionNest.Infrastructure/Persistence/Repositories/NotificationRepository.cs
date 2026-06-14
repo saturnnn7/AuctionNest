@@ -24,4 +24,7 @@ public sealed class NotificationRepository : Repository<Notification>, INotifica
         => await DbSet
             .Where(n => n.UserId == userId && !n.IsRead)
             .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
+    
+    public async Task<int> GetTotalCountAsync(Guid userId, CancellationToken ct = default)
+        => await DbSet.CountAsync(n => n.UserId == userId, ct);
 }

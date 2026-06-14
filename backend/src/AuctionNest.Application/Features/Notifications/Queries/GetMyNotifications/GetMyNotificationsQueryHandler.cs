@@ -32,13 +32,16 @@ public sealed class GetMyNotificationsQueryHandler
         var items = await _unitOfWork.Notifications
             .GetByUserIdAsync(userId.Value, request.Page, request.PageSize, cancellationToken);
 
-        var unreadCount = await _unitOfWork.Notifications
-            .GetUnreadCountAsync(userId.Value, cancellationToken);
+        // var unreadCount = await _unitOfWork.Notifications
+        //     .GetUnreadCountAsync(userId.Value, cancellationToken);
+        
+        var totalCount = await _unitOfWork.Notifications
+            .GetTotalCountAsync(userId.Value, cancellationToken);
 
         return Result.Success(new PagedResponse<NotificationDto>
         {
             Items = items.Select(NotificationDto.FromEntity).ToList(),
-            TotalCount = unreadCount,
+            TotalCount = totalCount,
             Page = request.Page,
             PageSize = request.PageSize
         });

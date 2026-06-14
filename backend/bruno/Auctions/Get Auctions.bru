@@ -1,0 +1,17 @@
+meta {
+  name: Get Auctions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/auctions
+  auth: none
+}
+
+params:query {
+  page: 1
+  pageSize: 10
+  sortBy: endsAt
+  sortDescending: false
+}

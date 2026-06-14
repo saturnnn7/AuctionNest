@@ -1,0 +1,21 @@
+meta {
+  name: Update Display Name
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/api/users/me/display-name
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "displayName": "Updated Name"
+  }
+}

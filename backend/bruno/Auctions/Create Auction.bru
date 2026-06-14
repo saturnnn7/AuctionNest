@@ -1,0 +1,44 @@
+meta {
+  name: Create Auction
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auctions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "categoryId": "{{categoryId}}",
+    "title": "Vintage Mechanical Keyboard",
+    "description": "IBM Model M from 1987, fully functional, excellent condition.",
+    "startPrice": 100.00,
+    "minBidIncrement": 10.00,
+    "startsAt": "{{auctionStartsAt}}",
+    "endsAt": "{{auctionEndsAt}}",
+    "reservePrice": 200.00,
+    "buyItNowPrice": 500.00,
+    "imageUrl": null
+  }
+}
+
+script:pre-request {
+  const now = new Date();
+  const startsAt = new Date(now.getTime() + 10 * 1000);      // через 10 сек
+  const endsAt   = new Date(now.getTime() + 7 * 24 * 3600 * 1000); // через 7 дней
+  bru.setEnvVar("auctionStartsAt", startsAt.toISOString());
+  bru.setEnvVar("auctionEndsAt",   endsAt.toISOString());
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("auctionId", res.body.id);
+  }
+}

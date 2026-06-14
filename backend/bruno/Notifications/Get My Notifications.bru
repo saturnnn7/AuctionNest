@@ -1,0 +1,25 @@
+meta {
+  name: Get My Notifications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/notifications
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+params:query {
+  page: 1
+  pageSize: 20
+}
+
+script:post-response {
+  if (res.status === 200 && res.body.items.length > 0) {
+    bru.setEnvVar("notificationId", res.body.items[0].id);
+  }
+}

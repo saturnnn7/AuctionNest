@@ -1,0 +1,15 @@
+meta {
+  name: Add To WatchList
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/watchlist/{{auctionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

@@ -101,7 +101,7 @@ public sealed class Auction : Entity
     /// Must be called inside a Redlock to prevent race conditions.
     /// Returns the newly created Bid so the caller can explicitly track it.
     /// </summary>
-    public Result<Bid> PlaceBid(Guid bidderId, decimal amount)
+    public Result<Bid> PlaceBid(Guid bidderId, decimal amount, DateTime? utcNow = null)
     {
         if (Status is not (AuctionStatus.Active or AuctionStatus.Extending))
             return Result.Failure<Bid>(AuctionErrors.NotActive);
@@ -122,7 +122,7 @@ public sealed class Auction : Entity
         CurrentPrice = amount;
     
         // Anti-snipe: extend if bid placed in last 30 seconds
-        var remaining = EndsAt - DateTime.UtcNow;
+        var remaining = EndsAt - (utcNow ?? DateTime.UtcNow);
         if (remaining.TotalSeconds <= AntiSnipeWindowSeconds
             && ExtensionCount < MaxExtensions)
         {

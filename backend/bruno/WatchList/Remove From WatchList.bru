@@ -1,0 +1,15 @@
+meta {
+  name: Remove From WatchList
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/watchlist/{{auctionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Cancel Auction
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/auctions/{{auctionId}}/cancel
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}

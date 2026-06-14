@@ -1,0 +1,25 @@
+meta {
+  name: Place Bid
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/auctions/{{auctionId}}/bids
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  X-Idempotency-Key: {{$randomInt}}-{{$timestamp}}
+}
+
+body:json {
+  {
+    "amount": 110.00
+  }
+}

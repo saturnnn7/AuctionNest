@@ -16,7 +16,7 @@ public sealed class RegisterUserCommandValidator : AbstractValidator<RegisterUse
         RuleFor(x => x.Email)
             .NotEmpty()
             .EmailAddress().WithMessage("A valid email address is required.")
-            .MaximumLength(255);
+            .MaximumLength(254);
 
         RuleFor(x => x.Password)
             .NotEmpty()

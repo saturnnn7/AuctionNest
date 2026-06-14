@@ -2,7 +2,7 @@ namespace AuctionNest.Application.Common.Interfaces.Services;
 
 public interface IDistributedLockService
 {
-    // Returns null если лок не удалось получить (уже занят)
+    // Returns null if the lock could not be acquired (already held)
     Task<IDistributedLock?> AcquireAsync(
         string resource,
         TimeSpan expiry,

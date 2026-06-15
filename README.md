@@ -9,7 +9,8 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![SignalR](https://img.shields.io/badge/SignalR-Real--time-512BD4?style=flat-square)
 ![CI](https://github.com/saturnnn7/AuctionNest/actions/workflows/ci.yml/badge.svg)
-![Tests](https://img.shields.io/badge/Tests-44%20passing-3fb950?style=flat-square)
+![Tests](https://img.shields.io/badge/Unit_Tests-44_passing-3fb950?style=flat-square)
+![Tests](https://img.shields.io/badge/Integration_Tests-22_passing-3fb950?style=flat-square)
 ![Architecture](https://img.shields.io/badge/Architecture-Clean-orange?style=flat-square)
 
 ---
@@ -36,6 +37,20 @@
 AuctionNest is a production-grade REST API for a real-time auction platform. Users can list items for auction, place competitive bids, and receive instant push notifications when they are outbid or when auctions change state — all in under 200ms via SignalR WebSockets.
 
 The system handles concurrent bidding safely using **Redis distributed locks (Redlock)**, prevents auction sniping with an **anti-snipe extension mechanism**, guarantees reliable event delivery through the **Outbox Pattern**, and schedules auction lifecycle transitions via **Hangfire** persistent background jobs.
+
+---
+
+## Live Demo
+
+The API is deployed and publicly available:
+
+| | |
+|---|---|
+| **Swagger UI** | https://auctionnest-api.onrender.com/swagger |
+| **Hangfire Dashboard** | https://auctionnest-api.onrender.com/hangfire |
+| **Health Check** | https://auctionnest-api.onrender.com/healthz |
+
+> ⚠️ Hosted on Render free tier — first request after inactivity may take ~30 seconds to wake up the service.
 
 ---
 
@@ -342,7 +357,7 @@ dotnet test tests/AuctionNest.UnitTests --verbosity normal
 Total tests: 44  |  Passed: 44  |  Failed: 0
 ```
 
-Covers the `Auction` aggregate root across all domain scenarios:
+Covers the `Auction` aggregate root across all domain scenarios: Activate, PlaceBid (anti-snipe, max extensions), BuyItNow, Cancel, End, IsReserveMet, IsBuyItNowAvailable.
 
 | Area | Tests |
 |---|---|
@@ -353,6 +368,18 @@ Covers the `Auction` aggregate root across all domain scenarios:
 | Cancel | Active/Draft, cannot cancel Ended/Cancelled |
 | End | No winner, winner, reserve met/not met, cannot end twice |
 | Computed properties | `IsReserveMet`, `IsBuyItNowAvailable` |
+
+### Integration Tests
+
+```bash
+dotnet test tests/AuctionNest.IntegrationTests --verbosity normal
+```
+
+```
+Total tests: 22  |  Passed: 22  |  Failed: 0  |  Time: ~30s
+```
+
+Full HTTP endpoint tests using **WebApplicationFactory** + **Testcontainers** (real PostgreSQL + Redis in Docker). Covers Auth (Register, Login, Refresh token rotation) and Auctions (Create, Get, PlaceBid authorization).
 
 ### API Tests (Bruno)
 

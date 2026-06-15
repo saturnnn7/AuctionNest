@@ -19,6 +19,7 @@
 
 - [Overview](#overview)
 - [Features](#features)
+- [Live Demo](#live-demo)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)

@@ -78,3 +78,5 @@ app.MapHub<AuctionHub>("/hubs/auction");
 await app.MigrateDatabaseAsync();
 
 app.Run();
+
+public partial class Program { } // for Integration Tests

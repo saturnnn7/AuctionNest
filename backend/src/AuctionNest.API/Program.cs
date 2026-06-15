@@ -13,6 +13,20 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Production: write RSA keys from env vars to temp files
+var privateKeyContent = builder.Configuration["Jwt:PrivateKeyContent"];
+var publicKeyContent  = builder.Configuration["Jwt:PublicKeyContent"];
+
+if (!string.IsNullOrEmpty(privateKeyContent) && !string.IsNullOrEmpty(publicKeyContent))
+{
+    const string keysDir = "/tmp/keys";
+    Directory.CreateDirectory(keysDir);
+    File.WriteAllText($"{keysDir}/private.pem", privateKeyContent.Replace("\\n", "\n"));
+    File.WriteAllText($"{keysDir}/public.pem",  publicKeyContent.Replace("\\n", "\n"));
+    builder.Configuration["Jwt:PrivateKeyPath"] = $"{keysDir}/private.pem";
+    builder.Configuration["Jwt:PublicKeyPath"]  = $"{keysDir}/public.pem";
+}
+
 builder.Services
     .AddApplicationServices()
     .AddInfrastructureServices(builder.Configuration);

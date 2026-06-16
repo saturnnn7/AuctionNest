@@ -1,0 +1,42 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+      {{ 'PROFILE.WATCHLIST_TITLE' | translate }}
+    </h1>
+    <a mat-button routerLink="/profile">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'PROFILE.BACK_TO_PROFILE' | translate }}
+    </a>
+  </div>
+
+  @if (loading()) {
+    <app-loading-spinner />
+  } @else if (auctions().length === 0) {
+    <app-empty-state
+      icon="favorite_border"
+      [message]="'PROFILE.EMPTY_WATCHLIST' | translate" />
+    <div class="flex flex-col items-center gap-2 mt-4">
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        {{ 'PROFILE.WATCHLIST_EMPTY_HINT' | translate }}
+      </p>
+      <a mat-raised-button color="accent" routerLink="/">
+        <mat-icon>search</mat-icon>
+        {{ 'PROFILE.BROWSE_AUCTIONS' | translate }}
+      </a>
+    </div>
+  } @else {
+    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+      {{ 'PROFILE.ITEMS_WATCHED' | translate: { count: auctions().length } }}
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (auction of auctions(); track auction.id) {
+        <div [@slideOut]>
+          <app-auction-card [auction]="auction" (watchlistToggled)="onToggle($event)" />
+        </div>
+      }
+    </div>
+  }
+
+</div>

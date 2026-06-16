@@ -1,0 +1,73 @@
+<mat-card class="h-full flex flex-col rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+  [routerLink]="['/auctions', auction().id]">
+
+  <!-- Image -->
+  <div class="relative aspect-video bg-gray-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+    @if (auction().imageUrl) {
+      <img
+        [src]="auction().imageUrl"
+        [alt]="auction().title"
+        loading="lazy"
+        class="w-full h-full object-cover"
+        (error)="onImageError($event)" />
+    }
+    @if (!auction().imageUrl) {
+      <div class="flex items-center justify-center w-full h-full">
+        <mat-icon class="text-gray-400 dark:text-slate-500" style="font-size:48px;width:48px;height:48px">gavel</mat-icon>
+      </div>
+    }
+
+    <!-- Watchlist heart (top-right) -->
+    <button mat-icon-button
+      class="absolute top-1 right-1 !bg-white/80 dark:!bg-slate-800/80 backdrop-blur-sm"
+      (click)="onWatchlistClick($event)"
+      [attr.aria-label]="isWatched() ? 'Remove from watchlist' : 'Add to watchlist'">
+      <mat-icon [class]="isWatched() ? 'text-rose-600' : 'text-gray-400'">
+        {{ isWatched() ? 'favorite' : 'favorite_border' }}
+      </mat-icon>
+    </button>
+  </div>
+
+  <mat-card-content class="flex flex-col gap-2 flex-1 p-4">
+
+    <!-- Category chip -->
+    <span class="inline-flex items-center w-fit px-2.5 py-0.5 rounded-full text-xs font-medium
+                 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+      {{ auction().categoryName }}
+    </span>
+
+    <!-- Title (max 2 lines) -->
+    <h3 class="font-semibold text-base leading-snug line-clamp-2 text-slate-900 dark:text-white min-h-[2.75rem]">
+      {{ auction().title }}
+    </h3>
+
+    <!-- Current price -->
+    <div class="mt-auto">
+      <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUCTION.CURRENT_PRICE' | translate }}</p>
+      <p class="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+        {{ auction().currentPrice | currency:'USD':'symbol':'1.2-2' }}
+      </p>
+    </div>
+
+    <!-- Countdown (Active/Extending only) -->
+    @if (isActive()) {
+      <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+        <mat-icon class="text-base" style="font-size:16px;width:16px;height:16px">schedule</mat-icon>
+        <app-countdown-timer [endsAt]="auction().endsAt" />
+      </div>
+    }
+
+    <!-- Footer row: bid count + status badge -->
+    <div class="flex items-center justify-between mt-1">
+      <span class="text-sm text-gray-500 dark:text-gray-400">
+        @if (auction().bidCount > 0) {
+          {{ 'COMMON.BIDS' | translate: { count: auction().bidCount } }}
+        } @else {
+          {{ 'COMMON.NO_BIDS' | translate }}
+        }
+      </span>
+      <app-auction-status-badge [status]="auction().status" />
+    </div>
+
+  </mat-card-content>
+</mat-card>

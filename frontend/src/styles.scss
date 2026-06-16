@@ -1,0 +1,115 @@
+// Tailwind directives
+@import 'styles/tailwind';
+
+// Angular Material theme (light/dark classes applied to body)
+@import 'styles/theme';
+
+// Global styles
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-weight: 400;
+}
+
+body {
+  &.dark-theme {
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+
+  &.light-theme {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+}
+
+// Notification dropdown panel — overrides Material's 280px max-width
+// Angular Material 18: class= on mat-menu is applied to .mat-mdc-menu-panel
+.notif-panel,
+.notif-panel .mat-mdc-menu-panel {
+  min-width: 320px !important;
+  max-width: 400px !important;
+}
+
+.notif-panel .mat-mdc-menu-content,
+.notif-panel .mat-mdc-menu-content:not(:empty) {
+  padding: 0 !important;
+}
+
+// Snackbar panel classes
+.snack-success .mdc-snackbar__surface {
+  background-color: #059669 !important;
+}
+
+.snack-warn .mdc-snackbar__surface {
+  background-color: #e11d48 !important;
+}
+
+.snack-info .mdc-snackbar__surface {
+  background-color: #1e40af !important;
+}
+
+// Countdown timer color classes
+.timer-normal {
+  color: inherit;
+}
+
+.timer-warning {
+  color: #f59e0b;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.timer-danger {
+  color: #e11d48;
+  animation: pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+// Bug 1: Remove phantom vertical ghost lines inside MDC outlined form fields.
+// (a) Line in the notch between the floating label and the rest of the outline:
+.mdc-notched-outline__notch {
+  border-right: none !important;
+  border-left: none !important;
+}
+// (b) Separator on MDC text affix elements (used by matTextPrefix/matTextSuffix like "$"):
+.mdc-text-field__affix--prefix,
+.mdc-text-field__affix--suffix {
+  border-right: none !important;
+  border-left: none !important;
+}
+// (c) Border on Angular Material text-prefix/suffix wrappers:
+.mat-mdc-form-field-text-prefix,
+.mat-mdc-form-field-text-suffix {
+  border: none !important;
+}
+// (d) ::after pseudo-element separator that some AM18 versions inject:
+.mat-mdc-form-field-text-prefix::after,
+.mat-mdc-form-field-icon-prefix::after {
+  display: none !important;
+}
+
+// Bug 3: Disabled paginator nav buttons (only 1 page) are too faint at default opacity.
+// Increase from ~0.12 (MDC default) to 0.35 so they are visible even when inactive.
+.mat-mdc-paginator button:disabled {
+  opacity: 0.35 !important;
+}
+
+// Bug 6: Hide native browser number-input spinners (+/- arrows).
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}

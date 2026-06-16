@@ -1,0 +1,86 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 px-4 py-12">
+  <mat-card class="w-full max-w-md shadow-lg rounded-xl">
+
+    <mat-card-header class="mb-6 pt-6 px-6">
+      <mat-card-title class="text-2xl font-bold">
+        {{ 'AUTH.REGISTER_TITLE' | translate }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content class="px-6">
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="flex flex-col gap-4">
+
+        <!-- Display Name -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>{{ 'AUTH.DISPLAY_NAME' | translate }}</mat-label>
+          <input matInput formControlName="displayName" autocomplete="name" />
+          @if (displayName.invalid && displayName.touched) {
+            <mat-error>{{ 'ERRORS.REQUIRED' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Username -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>{{ 'AUTH.USERNAME' | translate }}</mat-label>
+          <input matInput formControlName="username" autocomplete="username" />
+          @if (username.invalid && username.touched) {
+            <mat-error>{{ 'ERRORS.REQUIRED' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Email -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>{{ 'AUTH.EMAIL_FIELD' | translate }}</mat-label>
+          <input matInput formControlName="email" type="email" autocomplete="email" />
+          @if (email.invalid && email.touched) {
+            @if (email.errors?.['required']) {
+              <mat-error>{{ 'ERRORS.REQUIRED' | translate }}</mat-error>
+            } @else if (email.errors?.['email']) {
+              <mat-error>{{ 'ERRORS.EMAIL_INVALID' | translate }}</mat-error>
+            }
+          }
+        </mat-form-field>
+
+        <!-- Password -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>{{ 'AUTH.PASSWORD' | translate }}</mat-label>
+          <input matInput formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="new-password" />
+          <button mat-icon-button matSuffix type="button"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="(showPassword() ? 'AUTH.HIDE_PASSWORD' : 'AUTH.SHOW_PASSWORD') | translate">
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (password.invalid && password.touched) {
+            @if (password.errors?.['required']) {
+              <mat-error>{{ 'ERRORS.REQUIRED' | translate }}</mat-error>
+            } @else if (password.errors?.['minlength']) {
+              <mat-error>{{ 'ERRORS.PASSWORD_MIN_LENGTH' | translate }}</mat-error>
+            }
+          }
+        </mat-form-field>
+
+        <!-- Submit -->
+        <button mat-raised-button color="primary" type="submit"
+          [disabled]="loading() || form.invalid"
+          class="w-full h-12 text-base">
+          @if (loading()) {
+            <mat-spinner diameter="22" strokeWidth="3" class="inline-block align-middle mr-2" style="--mdc-circular-progress-active-indicator-color: white;"></mat-spinner>
+          }
+          <span class="align-middle">{{ 'AUTH.REGISTER_SUBMIT' | translate }}</span>
+        </button>
+
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="px-6 pb-6">
+      <p class="text-sm text-center text-gray-500 dark:text-slate-400 mt-2">
+        <a routerLink="/auth/login" class="text-emerald-600 font-medium hover:underline">
+          {{ 'AUTH.LOGIN_LINK' | translate }}
+        </a>
+      </p>
+    </mat-card-actions>
+
+  </mat-card>
+</div>

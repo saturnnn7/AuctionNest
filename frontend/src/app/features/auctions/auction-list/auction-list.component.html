@@ -1,0 +1,101 @@
+<!-- ── Hero ──────────────────────────────────────────────────── -->
+<section class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white py-10 px-4">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold tracking-tight mb-1">
+      {{ 'CATALOG.HERO_TITLE' | translate }}
+    </h1>
+    <p class="text-slate-500 dark:text-slate-300 text-base mb-3">
+      {{ 'CATALOG.HERO_TAGLINE' | translate }}
+    </p>
+    @if (activeCount() > 0) {
+      <span class="inline-flex items-center gap-1.5 text-sm font-medium
+                   bg-emerald-100 dark:bg-emerald-600/20 text-emerald-700 dark:text-emerald-400
+                   px-3 py-1 rounded-full">
+        <mat-icon class="text-base" style="font-size:16px;width:16px;height:16px">bolt</mat-icon>
+        {{ (activeCount() === 1 ? 'CATALOG.ACTIVE_COUNT_ONE' : 'CATALOG.ACTIVE_COUNT_OTHER') | translate: { count: activeCount() } }}
+      </span>
+    }
+  </div>
+</section>
+
+<!-- ── Filter bar (sticky below header) ─────────────────────── -->
+<div class="sticky top-16 z-40 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 py-2" [formGroup]="filterForm">
+    <div class="flex flex-wrap gap-2 items-end">
+
+      <!-- Search -->
+      <mat-form-field appearance="outline" class="flex-1 min-w-48" subscriptSizing="dynamic">
+        <mat-label>{{ 'COMMON.SEARCH' | translate }}</mat-label>
+        <mat-icon matPrefix class="mr-1">search</mat-icon>
+        <input matInput formControlName="search" />
+      </mat-form-field>
+
+      <!-- Category -->
+      <mat-form-field appearance="outline" class="w-44" subscriptSizing="dynamic">
+        <mat-label>{{ 'COMMON.CATEGORY' | translate }}</mat-label>
+        <mat-select formControlName="categoryId">
+          <mat-option value="">{{ 'COMMON.ALL_CATEGORIES' | translate }}</mat-option>
+          @for (cat of categories(); track cat.id) {
+            <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Status -->
+      <mat-form-field appearance="outline" class="w-40" subscriptSizing="dynamic">
+        <mat-label>{{ 'COMMON.STATUS' | translate }}</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="">{{ 'COMMON.ALL_STATUSES' | translate }}</mat-option>
+          <mat-option value="Active">{{ 'AUCTION.STATUS.ACTIVE' | translate }}</mat-option>
+          <mat-option value="Extending">{{ 'AUCTION.STATUS.EXTENDING' | translate }}</mat-option>
+          <mat-option value="Ended">{{ 'AUCTION.STATUS.ENDED' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Sort -->
+      <mat-form-field appearance="outline" class="w-44" subscriptSizing="dynamic">
+        <mat-label>{{ 'COMMON.SORT_BY' | translate }}</mat-label>
+        <mat-select formControlName="sortBy">
+          <mat-option value="endsAt_asc">{{ 'COMMON.SORT.ENDING_SOON' | translate }}</mat-option>
+          <mat-option value="endsAt_desc">{{ 'COMMON.SORT.ENDING_LATER' | translate }}</mat-option>
+          <mat-option value="price_asc">{{ 'COMMON.SORT.PRICE_LOW_HIGH' | translate }}</mat-option>
+          <mat-option value="price_desc">{{ 'COMMON.SORT.PRICE_HIGH_LOW' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Main content ──────────────────────────────────────────── -->
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+  @if (loading()) {
+    <app-loading-spinner />
+  } @else if (auctions().length === 0) {
+    <app-empty-state
+      message="{{ 'COMMON.NO_RESULTS' | translate }}"
+      icon="search_off" />
+  } @else {
+
+    <!-- Auction grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      @for (auction of auctions(); track auction.id) {
+        <app-auction-card [auction]="auction" />
+      }
+    </div>
+
+    <!-- Paginator -->
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="pageSize"
+      [pageIndex]="currentPage() - 1"
+      [pageSizeOptions]="pageSizeOptions"
+      [showFirstLastButtons]="true"
+      (page)="onPageChange($event)"
+      aria-label="Auction list pagination">
+    </mat-paginator>
+
+  }
+
+</main>

@@ -1,0 +1,125 @@
+<mat-toolbar class="sticky top-0 z-50 shadow-md">
+  <div class="flex items-center w-full max-w-7xl mx-auto px-4">
+
+    <!-- Brand -->
+    <a routerLink="/" class="flex items-center gap-2 no-underline">
+      <mat-icon>gavel</mat-icon>
+      <span class="text-xl font-bold tracking-tight">AuctionNest</span>
+    </a>
+
+    <span class="flex-1"></span>
+
+    <!-- Nav links -->
+    <nav class="hidden md:flex items-center gap-2 mr-4">
+      <a mat-button routerLink="/" routerLinkActive="mat-accent" [routerLinkActiveOptions]="{exact:true}">
+        {{ 'NAV.HOME' | translate }}
+      </a>
+      @if (auth.isAuthenticated()) {
+        <a mat-button routerLink="/auctions/create">
+          {{ 'NAV.CREATE' | translate }}
+        </a>
+      }
+    </nav>
+
+    <!-- Dark / Light toggle -->
+    <button mat-icon-button (click)="theme.toggle()" [attr.aria-label]="'Toggle theme'">
+      <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <!-- Notification bell (only when authenticated) -->
+    @if (auth.isAuthenticated()) {
+      <button mat-icon-button [matMenuTriggerFor]="notifMenu"
+        (menuOpened)="notifications.loadRecent(); notifications.loadUnreadCount()"
+        [attr.aria-label]="'NOTIFICATIONS.TITLE' | translate">
+        <mat-icon
+          [matBadge]="notifications.unreadCount() > 0 ? notifications.unreadCount() : null"
+          matBadgeColor="warn"
+          matBadgeSize="small">
+          notifications
+        </mat-icon>
+      </button>
+
+      <mat-menu #notifMenu="matMenu" class="notif-panel">
+
+        <!-- Panel header: title + mark-all-read -->
+        <div class="flex items-center justify-between px-3 py-2
+                    border-b border-slate-200 dark:border-slate-600">
+          <span class="font-semibold text-sm text-slate-800 dark:text-slate-200">
+            {{ 'NOTIFICATIONS.TITLE' | translate }}
+          </span>
+          @if (notifications.unreadCount() > 0) {
+            <button mat-button color="primary" class="!text-xs !leading-none !h-7 !px-2"
+              (click)="notifications.markAllRead()">
+              {{ 'NOTIFICATIONS.MARK_ALL_READ' | translate }}
+            </button>
+          }
+        </div>
+
+        <!-- Empty state -->
+        @if (notifications.notifications().length === 0) {
+          <div class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            {{ 'NOTIFICATIONS.EMPTY' | translate }}
+          </div>
+        }
+
+        <!-- Notification items -->
+        @for (n of notifications.notifications(); track n.id) {
+          <button mat-menu-item class="!h-auto !whitespace-normal !px-3"
+            (click)="onNotificationClick(n)">
+            <div class="flex items-start gap-2.5 py-1.5" style="min-width:288px">
+              <!-- Type icon -->
+              <mat-icon class="flex-shrink-0 !text-[20px] !h-5 !w-5 mt-0.5"
+                [ngClass]="notifIconClass(n.type)">
+                {{ notifIcon(n.type) }}
+              </mat-icon>
+              <!-- Text content -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm leading-snug text-slate-800 dark:text-slate-200"
+                   [class.font-semibold]="!n.isRead">
+                  {{ n.title }}
+                </p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                  {{ n.message }}
+                </p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                  {{ n.createdAt | timeAgo }}
+                </p>
+              </div>
+              <!-- Unread dot -->
+              @if (!n.isRead) {
+                <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-2"></span>
+              }
+            </div>
+          </button>
+        }
+
+      </mat-menu>
+    }
+
+    <!-- Auth buttons -->
+    @if (!auth.isAuthenticated()) {
+      <a mat-button routerLink="/auth/login">{{ 'NAV.LOGIN' | translate }}</a>
+      <a mat-raised-button color="primary" routerLink="/auth/register">
+        {{ 'NAV.REGISTER' | translate }}
+      </a>
+    } @else {
+      <button mat-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+        {{ auth.currentUser()?.displayName }}
+      </button>
+      <mat-menu #userMenu="matMenu">
+        <a mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>{{ 'NAV.PROFILE' | translate }}
+        </a>
+        <a mat-menu-item routerLink="/profile/watchlist">
+          <mat-icon>favorite</mat-icon>{{ 'NAV.WATCHLIST' | translate }}
+        </a>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>{{ 'NAV.LOGOUT' | translate }}
+        </button>
+      </mat-menu>
+    }
+
+  </div>
+</mat-toolbar>

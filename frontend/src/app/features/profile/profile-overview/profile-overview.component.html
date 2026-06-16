@@ -1,0 +1,165 @@
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+  <!-- ── Profile Header Card ── -->
+  <mat-card class="mb-8 dark:bg-slate-800">
+    <mat-card-content class="pt-6 pb-4">
+      <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+          <mat-icon class="!text-slate-300 dark:!text-slate-600"
+            style="font-size:80px;width:80px;height:80px">
+            account_circle
+          </mat-icon>
+        </div>
+
+        <!-- User details -->
+        <div class="flex-1 space-y-2 text-center sm:text-left min-w-0">
+
+          <!-- Display Name (inline edit) -->
+          <div class="flex items-center justify-center sm:justify-start gap-2">
+            @if (!isEditingName()) {
+              <span class="text-xl font-bold text-slate-900 dark:text-white truncate">
+                {{ user()?.displayName }}
+              </span>
+              <button mat-icon-button
+                (click)="startEditName()"
+                [attr.aria-label]="'PROFILE.EDIT_NAME' | translate"
+                class="!h-7 !w-7 flex-shrink-0">
+                <mat-icon class="!text-base">edit</mat-icon>
+              </button>
+            } @else {
+              <mat-form-field appearance="outline" class="w-48" subscriptSizing="dynamic">
+                <input matInput
+                  [formControl]="nameEditControl"
+                  maxlength="50"
+                  (keyup.enter)="saveName()"
+                  (keyup.escape)="cancelEditName()"
+                  autofocus />
+                @if (nameEditControl.hasError('required')) {
+                  <mat-error>{{ 'ERRORS.REQUIRED' | translate }}</mat-error>
+                } @else if (nameEditControl.hasError('maxlength')) {
+                  <mat-error>{{ 'ERRORS.MAX_LENGTH' | translate: { max: 50 } }}</mat-error>
+                }
+              </mat-form-field>
+              <button mat-icon-button color="primary"
+                (click)="saveName()"
+                [disabled]="nameEditControl.invalid || nameSaving()"
+                [attr.aria-label]="'COMMON.SAVE' | translate"
+                class="flex-shrink-0">
+                <mat-icon class="!text-base">
+                  {{ nameSaving() ? 'hourglass_empty' : 'check' }}
+                </mat-icon>
+              </button>
+              <button mat-icon-button
+                (click)="cancelEditName()"
+                [attr.aria-label]="'COMMON.CANCEL' | translate"
+                class="flex-shrink-0">
+                <mat-icon class="!text-base">close</mat-icon>
+              </button>
+            }
+          </div>
+
+          <!-- Username -->
+          <p class="text-slate-500 dark:text-slate-400 text-sm font-medium">
+            {{ '@' + (user()?.username ?? '') }}
+          </p>
+
+          <!-- Email -->
+          @if (profileEmail()) {
+            <p class="text-slate-500 dark:text-slate-400 text-sm flex items-center
+                       justify-center sm:justify-start gap-1">
+              <mat-icon class="!text-sm !h-4 !w-4">email</mat-icon>
+              {{ profileEmail() }}
+            </p>
+          }
+
+          <!-- Role chip -->
+          <div class="flex justify-center sm:justify-start pt-1">
+            @if (user()?.role === 'Admin') {
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs
+                           font-medium bg-violet-100 text-violet-800
+                           dark:bg-violet-900/30 dark:text-violet-300">
+                <mat-icon class="!text-xs !h-3.5 !w-3.5">shield</mat-icon>
+                {{ 'PROFILE.ROLE_ADMIN' | translate }}
+              </span>
+            } @else {
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs
+                           font-medium bg-slate-100 text-slate-600
+                           dark:bg-slate-700 dark:text-slate-300">
+                {{ 'PROFILE.ROLE_USER' | translate }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Quick links -->
+        <div class="flex-shrink-0 flex flex-col gap-2 items-end">
+          <a mat-stroked-button routerLink="/profile/watchlist">
+            <mat-icon>favorite</mat-icon>
+            {{ 'NAV.WATCHLIST' | translate }}
+          </a>
+          <a mat-stroked-button routerLink="/auctions/create">
+            <mat-icon>add</mat-icon>
+            {{ 'NAV.CREATE' | translate }}
+          </a>
+        </div>
+
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- ── My Auctions ── -->
+  <h2 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+    {{ 'PROFILE.MY_AUCTIONS' | translate }}
+  </h2>
+
+  @if (loadingAuctions()) {
+    <app-loading-spinner />
+  } @else if (myAuctions().length === 0) {
+    <app-empty-state
+      icon="gavel"
+      [message]="'PROFILE.MY_AUCTIONS_EMPTY' | translate" />
+    <div class="flex justify-center mt-4">
+      <a mat-raised-button color="accent" routerLink="/auctions/create">
+        <mat-icon>add</mat-icon>
+        {{ 'PROFILE.CREATE_FIRST' | translate }}
+      </a>
+    </div>
+  } @else {
+    <mat-tab-group dynamicHeight>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          {{ 'PROFILE.TAB_ALL' | translate }} ({{ myAuctions().length }})
+        </ng-template>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
+          @for (auction of myAuctions(); track auction.id) {
+            <app-auction-card [auction]="auction" />
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          {{ 'PROFILE.TAB_ACTIVE' | translate }} ({{ activeAuctions().length }})
+        </ng-template>
+        <div class="pt-4">
+          @if (activeAuctions().length === 0) {
+            <app-empty-state
+              icon="access_time"
+              [message]="'PROFILE.NO_ACTIVE_AUCTIONS' | translate" />
+          } @else {
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              @for (auction of activeAuctions(); track auction.id) {
+                <app-auction-card [auction]="auction" />
+              }
+            </div>
+          }
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+  }
+
+</div>

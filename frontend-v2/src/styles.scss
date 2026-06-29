@@ -1,0 +1,91 @@
+@import './theme';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg:           #FFFFFF;
+  --color-surface:      #F8FAFC;
+  --color-border:       #E2E8F0;
+  --color-text:         #0F172A;
+  --color-muted:        #64748B;
+  --color-accent:       #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-success:      #16A34A;
+  --color-warning:      #D97706;
+  --color-danger:       #DC2626;
+}
+
+.dark-theme {
+  --color-bg:      #0F172A;
+  --color-surface: #1E293B;
+  --color-border:  #334155;
+  --color-text:    #F1F5F9;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mdc-text-field__affix--prefix,
+.mdc-text-field__affix--suffix {
+  border-right: none !important;
+  border-left: none !important;
+}
+.mat-mdc-form-field-text-prefix,
+.mat-mdc-form-field-text-suffix { border: none !important; }
+.mat-mdc-form-field-text-prefix::after,
+.mat-mdc-form-field-icon-prefix::after { display: none !important; }
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] { -moz-appearance: textfield; }
+
+.countdown-normal  { color: var(--color-text); }
+.countdown-warning { color: var(--color-warning); }
+.countdown-danger  {
+  color: var(--color-danger);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes slideInTop {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bid-enter { animation: slideInTop 0.3s ease forwards; }
+
+.auction-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+// Notification dropdown — fixed width for readable message layout
+.notifications-menu {
+  min-width: 300px !important;
+  max-width: 360px !important;
+}

@@ -1,0 +1,71 @@
+{
+  "COMMON": {
+    "LOADING": "Loading...",
+    "ERROR": "Something went wrong",
+    "CANCEL": "Cancel",
+    "SAVE": "Save",
+    "BACK": "Back to auctions",
+    "NO_RESULTS": "No results found"
+  },
+  "NAV": {
+    "AUCTIONS": "Auctions",
+    "CREATE": "Create Auction",
+    "LOGIN": "Sign In",
+    "REGISTER": "Sign Up",
+    "LOGOUT": "Sign Out",
+    "PROFILE": "Profile",
+    "WATCHLIST": "Watchlist"
+  },
+  "AUCTION": {
+    "STATUS": {
+      "ACTIVE": "Active",
+      "ENDED": "Ended",
+      "CANCELLED": "Cancelled",
+      "PENDING": "Pending"
+    },
+    "LIST": {
+      "TITLE": "Live Auctions",
+      "SEARCH_PLACEHOLDER": "Search auctions...",
+      "FILTER_CATEGORY": "Category",
+      "FILTER_STATUS": "Status",
+      "SORT_NEWEST": "Newest first",
+      "SORT_ENDING": "Ending soon",
+      "SORT_PRICE_LOW": "Price: Low to High",
+      "SORT_PRICE_HIGH": "Price: High to Low"
+    },
+    "DETAIL": {
+      "CURRENT_PRICE": "Current Price",
+      "TIME_LEFT": "Time Left",
+      "BIDS": "bids",
+      "PLACE_BID": "Place Bid",
+      "BID_AMOUNT": "Your bid",
+      "MIN_BID": "Minimum bid: {{ amount }}",
+      "BUY_NOW": "Buy It Now",
+      "ADD_WATCHLIST": "Add to Watchlist",
+      "REMOVE_WATCHLIST": "Remove from Watchlist",
+      "SELLER": "Listed by",
+      "DESCRIPTION": "Description",
+      "BID_HISTORY": "Bid History",
+      "YOU": "You",
+      "BIDDER": "Bidder {{ n }}",
+      "WINNING_BID": "Winning bid",
+      "JUST_NOW": "just now",
+      "SHOW_MORE": "Show {{ count }} more bids"
+    },
+    "CREATE": {
+      "TITLE": "Create New Auction",
+      "SUBMIT": "Create Auction"
+    }
+  },
+  "AUTH": {
+    "LOGIN": { "TITLE": "Sign in to AuctionNest", "SUBMIT": "Sign In" },
+    "REGISTER": { "TITLE": "Create your account", "SUBMIT": "Create Account" },
+    "FIELDS": {
+      "USERNAME": "Username",
+      "EMAIL": "Email",
+      "PASSWORD": "Password",
+      "DISPLAY_NAME": "Display Name",
+      "USERNAME_OR_EMAIL": "Username or Email"
+    }
+  }
+}

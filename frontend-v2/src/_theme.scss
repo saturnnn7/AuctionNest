@@ -1,0 +1,72 @@
+@use '@angular/material' as mat;
+
+$custom-blue: (
+  50:   #eff6ff,
+  100:  #dbeafe,
+  200:  #bfdbfe,
+  300:  #93c5fd,
+  400:  #60a5fa,
+  500:  #3b82f6,
+  600:  #2563eb,
+  700:  #1d4ed8,
+  800:  #1e40af,
+  900:  #1e3a8a,
+  A100: #bfdbfe,
+  A200: #60a5fa,
+  A400: #2563eb,
+  A700: #1d4ed8,
+  contrast: (
+    50: rgba(black, 0.87), 100: rgba(black, 0.87),
+    200: rgba(black, 0.87), 300: rgba(black, 0.87),
+    400: rgba(black, 0.87), 500: white, 600: white,
+    700: white, 800: white, 900: white,
+    A100: rgba(black, 0.87), A200: white, A400: white, A700: white,
+  )
+);
+
+$custom-red: (
+  50:   #fef2f2,
+  100:  #fee2e2,
+  200:  #fecaca,
+  300:  #fca5a5,
+  400:  #f87171,
+  500:  #ef4444,
+  600:  #dc2626,
+  700:  #b91c1c,
+  800:  #991b1b,
+  900:  #7f1d1d,
+  A100: #fca5a5,
+  A200: #f87171,
+  A400: #ef4444,
+  A700: #dc2626,
+  contrast: (
+    50: rgba(black, 0.87), 100: rgba(black, 0.87),
+    200: rgba(black, 0.87), 300: rgba(black, 0.87),
+    400: rgba(black, 0.87), 500: white, 600: white,
+    700: white, 800: white, 900: white,
+    A100: rgba(black, 0.87), A200: white, A400: white, A700: white,
+  )
+);
+
+$primary: mat.m2-define-palette($custom-blue, 600);
+$accent:  mat.m2-define-palette($custom-blue, 700);
+$warn:    mat.m2-define-palette($custom-red, 600);
+
+$light-theme: mat.m2-define-light-theme((
+  color: (primary: $primary, accent: $accent, warn: $warn),
+  typography: mat.m2-define-typography-config(
+    $font-family: 'Inter, system-ui, sans-serif',
+  ),
+  density: -1,
+));
+
+$dark-theme: mat.m2-define-dark-theme((
+  color: (primary: $primary, accent: $accent, warn: $warn),
+  typography: mat.m2-define-typography-config(
+    $font-family: 'Inter, system-ui, sans-serif',
+  ),
+  density: -1,
+));
+
+.light-theme { @include mat.all-component-themes($light-theme); }
+.dark-theme  { @include mat.all-component-themes($dark-theme); }
